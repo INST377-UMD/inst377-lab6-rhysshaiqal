@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet Map with Random Coordinates</title>
+  <!-- Importing the Leaflet CSS for styling the map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <!-- Importing the Leaflet JavaScript library -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+
+  <h2>Random Coordinate Map with Localities</h2>
+  <!-- Div to hold the map, setting width and height -->
+  <div id="map" style="width: 100%; height: 400px;"></div>
+  
+  <!-- Div to display coordinates and locality information for each marker -->
+  <div id="coordinates">
+    <p>Marker 1: <span id="marker1-coord"></span> - Locality: <span id="marker1-locality"></span></p>
+    <p>Marker 2: <span id="marker2-coord"></span> - Locality: <span id="marker2-locality"></span></p>
+    <p>Marker 3: <span id="marker3-coord"></span> - Locality: <span id="marker3-locality"></span></p>
+  </div>
+
+  <script>
+    // Initialize the map, centered on the US to show all markers. A zoom level of 4 gives a good overview.
+    const map = L.map('map').setView([39.8283, -98.5795], 4);
+
+    // Add the map tiles from OpenStreetMap - these create the visual map background
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Function to generate a random number within a range with specified decimal places
+    function getRandomInRange(from, to, fixed) {
+      return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+    }
+
+    // Generate 3 sets of random latitude and longitude coordinates
+    const coordinates = [
+      { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+      { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+      { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) }
+    ];
+
+    // Function to call the API and get the locality name based on latitude and longitude
+    async function fetchLocality(lat, lng, markerId, localityId) {
+      // Constructing the API URL with the coordinates
+      const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+      try {
+        // Fetch the data from the API
+        const response = await fetch(url);
+        const data = await response.json();
+        // Update the coordinates and locality text on the page
+        document.getElementById(markerId).textContent = `${lat}, ${lng}`;
+        document.getElementById(localityId).textContent = data.locality || "Locality not found";
+      } catch (error) {
+        console.error("Error fetching locality:", error);
+      }
+    }
+
+    // Add markers to the map for each coordinate and fetch their localities
+    coordinates.forEach((coord, index) => {
+      // Adding a marker to the map at each random coordinate
+      const marker = L.marker([coord.lat, coord.lng]).addTo(map);
+      // Calling the function to fetch and display locality info for each marker
+      fetchLocality(coord.lat, coord.lng, `marker${index + 1}-coord`, `marker${index + 1}-locality`);
+    });
+  </script>
+
+</body>
+</html>
